@@ -1,0 +1,7 @@
+{"time":"2025-12-18T14:39:31.593912802+07:00","level":"INFO","msg":"stream: starting","core version":"0.23.1"}
+{"time":"2025-12-18T14:39:32.220469701+07:00","level":"INFO","msg":"stream: created new stream","id":"m5ugppcs"}
+{"time":"2025-12-18T14:39:32.220590673+07:00","level":"INFO","msg":"handler: started","stream_id":"m5ugppcs"}
+{"time":"2025-12-18T14:39:32.220694136+07:00","level":"INFO","msg":"stream: started","id":"m5ugppcs"}
+{"time":"2025-12-18T14:39:32.220718421+07:00","level":"INFO","msg":"sender: started","stream_id":"m5ugppcs"}
+{"time":"2025-12-18T14:39:32.220730364+07:00","level":"INFO","msg":"writer: started","stream_id":"m5ugppcs"}
+{"time":"2025-12-18T14:40:51.997922109+07:00","level":"INFO","msg":"stream: closing","id":"m5ugppcs"}

@@ -1,0 +1,11 @@
+{"time":"2025-12-18T12:22:47.346143156+07:00","level":"INFO","msg":"stream: starting","core version":"0.23.1"}
+{"time":"2025-12-18T12:22:47.876817198+07:00","level":"INFO","msg":"stream: created new stream","id":"nmxrcamp"}
+{"time":"2025-12-18T12:22:47.87691024+07:00","level":"INFO","msg":"handler: started","stream_id":"nmxrcamp"}
+{"time":"2025-12-18T12:22:47.876998748+07:00","level":"INFO","msg":"stream: started","id":"nmxrcamp"}
+{"time":"2025-12-18T12:22:47.877027149+07:00","level":"INFO","msg":"sender: started","stream_id":"nmxrcamp"}
+{"time":"2025-12-18T12:22:47.877040229+07:00","level":"INFO","msg":"writer: started","stream_id":"nmxrcamp"}
+{"time":"2025-12-18T12:22:49.404264307+07:00","level":"INFO","msg":"stream: closing","id":"nmxrcamp"}
+{"time":"2025-12-18T12:22:50.622518662+07:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2025-12-18T12:22:51.055962003+07:00","level":"INFO","msg":"handler: closed","stream_id":"nmxrcamp"}
+{"time":"2025-12-18T12:22:51.056089371+07:00","level":"INFO","msg":"sender: closed","stream_id":"nmxrcamp"}
+{"time":"2025-12-18T12:22:51.056100088+07:00","level":"INFO","msg":"stream: closed","id":"nmxrcamp"}

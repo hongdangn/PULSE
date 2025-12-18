@@ -1,0 +1,54 @@
+  0%|                                                                                                 | 0/104061 [00:00<?, ?it/s]Traceback (most recent call last):
+  File "/home/dang.nh4/PULSE/LLaVA/llava/train/train_mem.py", line 4, in <module>
+    train(attn_implementation=None)
+  File "/home/dang.nh4/PULSE/LLaVA/llava/train/train.py", line 510, in train
+    trainer.train()
+  File "/home/dang.nh4/miniconda3/envs/ecg-qa/lib/python3.11/site-packages/transformers/trainer.py", line 1539, in train
+    return inner_training_loop(
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/home/dang.nh4/miniconda3/envs/ecg-qa/lib/python3.11/site-packages/transformers/trainer.py", line 1836, in _inner_training_loop
+    for step, inputs in enumerate(epoch_iterator):
+  File "/home/dang.nh4/miniconda3/envs/ecg-qa/lib/python3.11/site-packages/accelerate/data_loader.py", line 384, in __iter__
+    current_batch = next(dataloader_iter)
+                    ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dang.nh4/miniconda3/envs/ecg-qa/lib/python3.11/site-packages/torch/utils/data/dataloader.py", line 630, in __next__
+    data = self._next_data()
+           ^^^^^^^^^^^^^^^^^
+  File "/home/dang.nh4/miniconda3/envs/ecg-qa/lib/python3.11/site-packages/torch/utils/data/dataloader.py", line 1345, in _next_data
+    return self._process_data(data)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dang.nh4/miniconda3/envs/ecg-qa/lib/python3.11/site-packages/torch/utils/data/dataloader.py", line 1371, in _process_data
+    data.reraise()
+  File "/home/dang.nh4/miniconda3/envs/ecg-qa/lib/python3.11/site-packages/torch/_utils.py", line 694, in reraise
+    raise exception
+ValueError: Caught ValueError in DataLoader worker process 0.
+Original Traceback (most recent call last):
+  File "/home/dang.nh4/miniconda3/envs/ecg-qa/lib/python3.11/site-packages/torch/utils/data/_utils/worker.py", line 308, in _worker_loop
+    data = fetcher.fetch(index)
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/home/dang.nh4/miniconda3/envs/ecg-qa/lib/python3.11/site-packages/torch/utils/data/_utils/fetch.py", line 51, in fetch
+    data = [self.dataset[idx] for idx in possibly_batched_index]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dang.nh4/miniconda3/envs/ecg-qa/lib/python3.11/site-packages/torch/utils/data/_utils/fetch.py", line 51, in <listcomp>
+    data = [self.dataset[idx] for idx in possibly_batched_index]
+            ~~~~~~~~~~~~^^^^^
+  File "/home/dang.nh4/PULSE/LLaVA/llava/train/train.py", line 232, in __getitem__
+    image = process_anyres_image(image, processor, self.model_config.image_grid_pinpoints)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dang.nh4/PULSE/LLaVA/llava/mm_utils.py", line 134, in process_anyres_image
+    possible_resolutions = ast.literal_eval(grid_pinpoints)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dang.nh4/miniconda3/envs/ecg-qa/lib/python3.11/ast.py", line 110, in literal_eval
+    return _convert(node_or_string)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dang.nh4/miniconda3/envs/ecg-qa/lib/python3.11/ast.py", line 109, in _convert
+    return _convert_signed_num(node)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/dang.nh4/miniconda3/envs/ecg-qa/lib/python3.11/ast.py", line 83, in _convert_signed_num
+    return _convert_num(node)
+           ^^^^^^^^^^^^^^^^^^
+  File "/home/dang.nh4/miniconda3/envs/ecg-qa/lib/python3.11/ast.py", line 74, in _convert_num
+    _raise_malformed_node(node)
+  File "/home/dang.nh4/miniconda3/envs/ecg-qa/lib/python3.11/ast.py", line 71, in _raise_malformed_node
+    raise ValueError(msg + f': {node!r}')
+ValueError: malformed node or string: None
