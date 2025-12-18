@@ -2,4 +2,5 @@
 .idea
 /data
 llava.egg-info
+/wandb
 __pycache__
