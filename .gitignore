@@ -3,4 +3,6 @@
 /data
 llava.egg-info
 /wandb
+output
+eval_res
 __pycache__

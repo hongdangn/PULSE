@@ -8,8 +8,8 @@ export WANDB_NAME="ddangdangnh"
 export WANDB_PROJECT="ECGDistill"
 
 # distributed training configurations
-export GPUS_PER_NODE=2
-export CUDA_VISIBLE_DEVICES=2,7
+export GPUS_PER_NODE=1
+export CUDA_VISIBLE_DEVICES=2
 export NODE_RANK=0
 export WORLD_SIZE=$(($GPUS_PER_NODE))
 

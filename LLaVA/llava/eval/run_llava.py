@@ -9,6 +9,8 @@ from llava.constants import (
     IMAGE_PLACEHOLDER,
 )
 from llava.conversation import conv_templates, SeparatorStyle
+from peft import LoraConfig, PeftModel
+import os
 from llava.model.builder import load_pretrained_model
 from llava.utils import disable_torch_init
 from llava.mm_utils import (
@@ -51,10 +53,29 @@ def eval_model(args):
     # Model
     disable_torch_init()
 
-    model_name = get_model_name_from_path(args.model_path)
+    # model_name = get_model_name_from_path(args.model_path)
+    model_name = args.model_name
     tokenizer, model, image_processor, context_len = load_pretrained_model(
-        args.model_path, args.model_base, model_name
+        args.model_path, args.model_base, args.model_name, lora=args.lora, device_map="cuda:" + str(args.device)
     )
+
+    print(model)
+    if args.lora:
+        print(f'Loading Pre-trained LoRA model from {args.model_path}')
+        lora_config = LoraConfig.from_pretrained(args.model_path)
+
+        lora_model = PeftModel.from_pretrained(model, 
+                                                args.model_path, 
+                                                config=lora_config,
+                                                is_trainable=True)
+
+        projector_path = os.path.join(args.model_path, "mm_projector.pth")
+
+        if os.path.exists(projector_path):
+            lora_model.base_model.model.model.mm_projector.load_state_dict(
+                torch.load(projector_path)
+            )
+            print("Successfully loading the projector's weight")
 
     qs = args.query
     image_token_se = DEFAULT_IM_START_TOKEN + DEFAULT_IMAGE_TOKEN + DEFAULT_IM_END_TOKEN
@@ -78,17 +99,11 @@ def eval_model(args):
     elif "v1" in model_name.lower() or "pulse" in model_name.lower():
         conv_mode = "llava_v1"
     elif "mpt" in model_name.lower():
-        conv_mode = "mpt"
+        conv_mode = "mpt"        
     else:
         conv_mode = "llava_v0"
 
-    if args.conv_mode is not None and conv_mode != args.conv_mode:
-        print(
-            "[WARNING] the auto inferred conversation mode is {}, while `--conv-mode` is {}, using {}".format(
-                conv_mode, args.conv_mode, args.conv_mode
-            )
-        )
-    else:
+    if args.conv_mode is not None:
         args.conv_mode = conv_mode
 
     conv = conv_templates[args.conv_mode].copy()
@@ -112,17 +127,30 @@ def eval_model(args):
     )
 
     with torch.inference_mode():
-        output_ids = model.generate(
-            input_ids,
-            images=images_tensor,
-            image_sizes=image_sizes,
-            do_sample=True if args.temperature > 0 else False,
-            temperature=args.temperature,
-            top_p=args.top_p,
-            num_beams=args.num_beams,
-            max_new_tokens=args.max_new_tokens,
-            use_cache=True,
-        )
+        if not args.lora:
+            output_ids = model.generate(
+                input_ids,
+                images=images_tensor,
+                image_sizes=image_sizes,
+                do_sample=True if args.temperature > 0 else False,
+                temperature=args.temperature,
+                top_p=args.top_p,
+                num_beams=args.num_beams,
+                max_new_tokens=args.max_new_tokens,
+                use_cache=True,
+            )
+        else:
+            output_ids = lora_model.generate(
+                input_ids,
+                images=images_tensor,
+                image_sizes=image_sizes,
+                do_sample=True if args.temperature > 0 else False,
+                temperature=args.temperature,
+                top_p=args.top_p,
+                num_beams=args.num_beams,
+                max_new_tokens=args.max_new_tokens,
+                use_cache=True,
+            )
 
     outputs = tokenizer.batch_decode(output_ids, skip_special_tokens=True)[0].strip()
     print(outputs)
@@ -136,6 +164,9 @@ if __name__ == "__main__":
     parser.add_argument("--query", type=str, required=True)
     parser.add_argument("--conv-mode", type=str, default=None)
     parser.add_argument("--sep", type=str, default=",")
+    parser.add_argument("--lora", type=bool, default=False)
+    parser.add_argument("--model_name", type=str, default="apple/FastVLM-1.5B")
+    parser.add_argument("--device", type=int, default=0)
     parser.add_argument("--temperature", type=float, default=0.2)
     parser.add_argument("--top_p", type=float, default=None)
     parser.add_argument("--num_beams", type=int, default=1)

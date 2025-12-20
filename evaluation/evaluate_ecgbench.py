@@ -53,7 +53,7 @@ def compute_f1_auc(y_pred, y_true):
         try:
             auc = roc_auc_score(y_true_bin[:, i], y_pred_bin[:, i])
         except ValueError:
-            auc = np.nan  If AUC cannot be calculated, NaN is returned
+            auc = np.nan  
         auc_scores.append(auc)
         # print(f'AUC score for class {mlb.classes_[i]}: {auc}')    
     # print("f1 all",np.mean(f1_scores_all), "auc all", np.mean(auc_scores))

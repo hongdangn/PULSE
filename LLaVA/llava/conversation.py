@@ -71,6 +71,15 @@ class Conversation:
                     ret += role + message + self.sep
                 else:
                     ret += role
+        elif self.sep_style == SeparatorStyle.QWEN_2:  # fix: add qwen2
+            ret = self.system + self.sep
+            for i, (role, message) in enumerate(messages):
+                if message:
+                    if type(message) is tuple:
+                        message, _, _ = message
+                    ret += role + message + self.sep
+                else:
+                    ret += role
         elif self.sep_style == SeparatorStyle.LLAMA_2:
             wrap_sys = lambda msg: f"<<SYS>>\n{msg}\n<</SYS>>\n\n" if len(msg) > 0 else msg
             wrap_inst = lambda msg: f"[INST] {msg} [/INST]"

@@ -82,6 +82,8 @@ class LlavaQwen2ForCausalLM(Qwen2ForCausalLM, LlavaMetaForCausalLM):
         cache_position=None,
     ) -> Union[Tuple, CausalLMOutputWithPast]:
 
+        image_features = None
+        
         if inputs_embeds is None:
             (
                 input_ids,
@@ -143,6 +145,7 @@ class LlavaQwen2ForCausalLM(Qwen2ForCausalLM, LlavaMetaForCausalLM):
                 attention_mask,
                 _,
                 inputs_embeds,
+                _,
                 _
             ) = self.prepare_inputs_labels_for_multimodal(
                 inputs,
