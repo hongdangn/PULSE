@@ -61,9 +61,9 @@ def compute_f1_auc(y_pred, y_true):
     
 def eval_mmmu(dir):
     print("====mmmu====")
-    with open("/path/to/PULSE/data/ECGBench/mmmu-ecg.json", "r", encoding='utf-8') as f:
+    with open("./data/ECGBench/mmmu-ecg.json", "r", encoding='utf-8') as f:
         data = json.load(f)
-        answer_dict = {item["No"]: item["conversations"][1]["value"] for item in data}
+        answer_dict = {item["id"]: item["conversations"][1]["value"] for item in data}
     
     score_dict = {}
     for root, dirs, files in os.walk(dir):
@@ -118,7 +118,7 @@ def eval_mmmu(dir):
 def eval_ptb_test(dir):
     print("====ptb test====")
     label_space = ["NORM","MI","STTC","CD","HYP"]
-    golden_data_path = "/path/to/PULSE/data/ECGBench/ptb-test.json"
+    golden_data_path = "./data/ECGBench/ptb-test.json"
     golden_label = {}
     with open(golden_data_path, "r", encoding='utf-8') as f:
         golden_data = json.load(f)
@@ -173,7 +173,7 @@ def eval_ptb_test(dir):
 def eval_cpsc_test(dir):
     print("====cpsc test====")
     label_space = ["NORM", "AF", "I-AVB", "LBBB", "RBBB", "PAC", "PVC", "STD", "STE"]
-    golden_data_path = "/path/to/PULSE/data/ECGBench/cpsc-test.json"
+    golden_data_path = "./data/ECGBench/cpsc-test.json"
     golden_label = {}
     with open(golden_data_path, "r", encoding='utf-8') as f:
         golden_data = json.load(f)
@@ -230,7 +230,7 @@ def eval_cpsc_test(dir):
         
 def eval_ecgqa_test(dir):
     print("====ecgqa test====")
-    golden_data_path = "/path/to/PULSE/data/ECGBench/ecgqa-test.json"
+    golden_data_path = "./data/ECGBench/ecgqa-test.json"
     golden_label = {}
     with open(golden_data_path, "r", encoding='utf-8') as f:
         golden_data = json.load(f)
@@ -292,7 +292,7 @@ def eval_ecgqa_test(dir):
 def eval_code15_test(dir):
     print("====code15 test====")
     label_space = ["1dAVb", "RBBB", "LBBB", "SB", "ST", "AF"]
-    golden_data_path = "/path/to/PULSE/data/ECGBench/code15-test.json"
+    golden_data_path = "./data/ECGBench/code15-test.json"
     golden_label = {}
     with open(golden_data_path, "r", encoding='utf-8') as f:
         golden_data = json.load(f)
@@ -363,7 +363,7 @@ def eval_code15_test(dir):
         
 def eval_csn_test(dir):
     print("====csn test====")
-    with open("/path/to/PULSE/data/ECGBench/csn-test-no-cot.json", "r", encoding='utf-8') as f:
+    with open("./data/ECGBench/csn-test-no-cot.json", "r", encoding='utf-8') as f:
         data = json.load(f)
         answer_dict = {item["id"]: item["conversations"][1]["value"][0] for item in data}
     
@@ -421,7 +421,7 @@ def eval_csn_test(dir):
         
 def eval_g12_test(dir):
     print("====g12 test====")
-    with open("/path/to/PULSE/data/ECGBench/g12-test-no-cot.json", "r", encoding='utf-8') as f:
+    with open("./data/ECGBench/g12-test-no-cot.json", "r", encoding='utf-8') as f:
         data = json.load(f)
         answer_dict = {item["id"]: item["conversations"][1]["value"][0] for item in data}
     
@@ -477,12 +477,12 @@ def eval_g12_test(dir):
             
                             
 if __name__ == "__main__":
-    root = "/path/to/eval_outputs"
+    root = "/home/dang.nh4/PULSE/eval_res"
     
-    eval_mmmu(f"{root}/mmmu-ecg")
+    # eval_mmmu(f"{root}/mmmu-ecg")
     eval_ptb_test(f"{root}/ptb-test")
-    eval_cpsc_test(f"{root}/cpsc-test")
-    eval_csn_test(f"{root}/csn-test-no-cot")
-    eval_g12_test(f"{root}/g12-test-no-cot")
-    eval_ecgqa_test(f"{root}/ecgqa-test")
+    # eval_cpsc_test(f"{root}/cpsc-test")
+    # eval_csn_test(f"{root}/csn-test-no-cot")
+    # eval_g12_test(f"{root}/g12-test-no-cot")
+    # eval_ecgqa_test(f"{root}/ecgqa-test")
     eval_code15_test(f"{root}/code15-test")

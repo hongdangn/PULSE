@@ -60,7 +60,7 @@ def eval_model(args):
                                                 config=lora_config,
                                                 is_trainable=False)
 
-        model = model.merge_and_unload()
+        # model = model.merge_and_unload()
         projector_path = os.path.join(args.model_path, "mm_projector.pth")
 
         if os.path.exists(projector_path):
