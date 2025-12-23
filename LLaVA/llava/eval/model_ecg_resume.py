@@ -14,17 +14,21 @@ from peft import LoraConfig, PeftModel
 import time
 from PIL import Image
 import math
+from torch.nn.utils.rnn import pad_sequence
 
+# def split_list(lst, n):
+#     """Split a list into n (roughly) equal-sized chunks"""
+#     chunk_size = math.ceil(len(lst) / n)  # integer division
+#     return [lst[i:i+chunk_size] for i in range(0, len(lst), chunk_size)]
+
+
+# def get_chunk(lst, n, k):
+#     chunks = split_list(lst, n)
+#     return chunks[k]
 
 def split_list(lst, n):
-    """Split a list into n (roughly) equal-sized chunks"""
-    chunk_size = math.ceil(len(lst) / n)  # integer division
-    return [lst[i:i+chunk_size] for i in range(0, len(lst), chunk_size)]
-
-
-def get_chunk(lst, n, k):
-    chunks = split_list(lst, n)
-    return chunks[k]
+    for i in range(0, len(lst), n):
+        yield lst[i:i + n]
 
 def load_module_state(model, module_path):
     model_state = model.state_dict()
@@ -65,14 +69,16 @@ def eval_model(args):
 
         if os.path.exists(projector_path):
             load_module_state(model, projector_path)
-        model.to(dtype=torch.bfloat16)
-        model.eval()
-        model.generation_config.bos_token_id = model.config.bos_token_id
-        model.generation_config.pad_token_id = tokenizer.pad_token_id
+        
+        model = model.merge_and_unload()
+
+    model.eval()
+    model.generation_config.bos_token_id = model.config.bos_token_id
+    model.generation_config.pad_token_id = tokenizer.pad_token_id
         # model.config.pad_token_id = tokenizer.pad_token_id
         # model.generation_config.bos_token_id = tokenizer.bos_token_id
         # model.config.bos_token_id = tokenizer.bos_token_id
-
+    model.to(dtype=torch.bfloat16)
     questions = []
     with open(args.question_file, "r") as f:
         json_data = json.load(f)
@@ -82,74 +88,86 @@ def eval_model(args):
                               "text": line["conversations"][0]["value"].replace("<image>\n",""),
                               "ans": line["conversations"][1]["value"]})
 
-    # Check if answers file already exists and load existing data
     all_answers = []
-    existing_question_ids = set()
     
     if os.path.exists(args.answers_file):
         with open(args.answers_file, "r") as ans_file:
             for line in ans_file:
                 existing_data = json.loads(line)
-                all_answers.append(existing_data)  # Store existing answers
-                existing_question_ids.add(existing_data["question_id"])  # Track existing question_ids
+                all_answers.append(existing_data)  
 
     if args.image_aspect_ratio:
         model.config.image_aspect_ratio = args.image_aspect_ratio
 
-    # Process new questions
-    for line in tqdm(questions, total=len(questions)):
-        idx = line["question_id"]
-        # Skip if the answer for this question_id already exists
-        if idx in existing_question_ids:
-            print(f"Skipping question {idx}, already exists.")
-            continue
+    total_batches = math.ceil(len(questions) / args.batch_size)
 
-        image_file = line["image"]
-        qs = line["text"]
-        cur_prompt = qs
-        if model.config.mm_use_im_start_end:
-            qs = DEFAULT_IM_START_TOKEN + DEFAULT_IMAGE_TOKEN + DEFAULT_IM_END_TOKEN + '\n' + qs
-        else:
-            qs = DEFAULT_IMAGE_TOKEN + '\n' + qs
+    for batch in tqdm(split_list(questions, args.batch_size), total=total_batches):
+        input_ids_list = []
+        image_list = []
+        current_prompts = []
+        image_sizes = []
 
-        conv = conv_templates[args.conv_mode].copy()
-        conv.append_message(conv.roles[0], qs)
-        conv.append_message(conv.roles[1], None)
-        prompt = conv.get_prompt()
+        for line in batch:
+            image_file = line["image"]
+            qs = line["text"]
+            current_prompts.append(qs)
 
-        input_ids = tokenizer_image_token(prompt, tokenizer, IMAGE_TOKEN_INDEX, return_tensors='pt').unsqueeze(0).cuda()
+            if model.config.mm_use_im_start_end:
+                qs = DEFAULT_IM_START_TOKEN + DEFAULT_IMAGE_TOKEN + DEFAULT_IM_END_TOKEN + '\n' + qs
+            else:
+                qs = DEFAULT_IMAGE_TOKEN + '\n' + qs
 
-        image = Image.open(os.path.join(args.image_folder, image_file)).convert('RGB')
-        image_tensor = process_images([image], image_processor, model.config)[0]
+            conv = conv_templates[args.conv_mode].copy()
+            conv.append_message(conv.roles[0], qs)
+            conv.append_message(conv.roles[1], None)
+            prompt = conv.get_prompt()
 
-        if args.lora:
-            image_tensor.to(dtype=torch.bfloat16)
+            ids = tokenizer_image_token(prompt, tokenizer, IMAGE_TOKEN_INDEX, return_tensors='pt')
+            input_ids_list.append(ids)
+
+            image = Image.open(os.path.join(args.image_folder, image_file)).convert('RGB')
+            image_list.append(image)
+            image_sizes.append(image.size)
+
+        input_ids_padded = pad_sequence(input_ids_list, batch_first=True, padding_value=tokenizer.pad_token_id)
+        attention_mask = input_ids_padded.ne(tokenizer.pad_token_id)
+
+        image_tensor = process_images(image_list, image_processor, model.config)
         
+        image_tensor = image_tensor.to(dtype=torch.bfloat16, device=device)
+        input_ids_padded = input_ids_padded.to(device=device)
+        attention_mask = attention_mask.to(device=device)
+
         with torch.inference_mode():
             output_ids = model.generate(
-                input_ids.to(device=device),
-                images=image_tensor.unsqueeze(0).to(device=device),
-                image_sizes=[image.size],
+                input_ids_padded,
+                images=image_tensor,
+                # attention_mask=attention_mask,
+                image_sizes=image_sizes,
                 do_sample=True if args.temperature > 0 else False,
                 temperature=args.temperature,
                 top_p=args.top_p,
                 num_beams=args.num_beams,
                 max_new_tokens=args.max_new_tokens,
-                use_cache=True)
+                use_cache=True
+            )
 
-        outputs = tokenizer.batch_decode(output_ids, skip_special_tokens=True)[0].strip()
+        outputs = tokenizer.batch_decode(output_ids, skip_special_tokens=True)
 
-        ans_id = shortuuid.uuid()
-        new_answer = {
-            "question_id": idx,
-            "prompt": cur_prompt,
-            "text": outputs,
-            "answer_id": ans_id,
-            "model_id": model_name,
-            "metadata": {}
-        }
+        for id, line in enumerate(batch):
+            ans_id = shortuuid.uuid()
+            
+            new_answer = {
+                "question_id": line['question_id'],
+                "prompt": current_prompts[id],
+                "text": outputs[id].strip(),
+                "answer_id": ans_id,
+                "model_id": args.model_path,
+                "max_new_tokens": args.max_new_tokens,
+                "metadata": {}
+            }
 
-        all_answers.append(new_answer)  # Add new answers to the list
+            all_answers.append(new_answer)
 
     with open(args.answers_file, "w") as ans_file:
         for answer in all_answers:
@@ -158,6 +176,7 @@ def eval_model(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--model-path", type=str, default="facebook/opt-350m")
+    parser.add_argument("--batch_size", type=int, default=1)
     parser.add_argument("--model-base", type=str, default=None)
     parser.add_argument("--image-folder", type=str, default="")
     parser.add_argument("--question-file", type=str, default="tables/question.jsonl")
@@ -172,7 +191,7 @@ if __name__ == "__main__":
     parser.add_argument("--temperature", type=float, default=0.0)
     parser.add_argument("--top_p", type=float, default=None)
     parser.add_argument("--num_beams", type=int, default=1)
-    parser.add_argument("--max_new_tokens", type=int, default=128)
+    parser.add_argument("--max_new_tokens", type=int, default=256)
     args = parser.parse_args()
 
     eval_model(args)

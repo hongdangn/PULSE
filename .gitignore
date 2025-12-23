@@ -5,4 +5,5 @@ llava.egg-info
 /wandb
 output
 eval_res
+output/
 __pycache__
